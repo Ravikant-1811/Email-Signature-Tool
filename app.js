@@ -4,6 +4,8 @@ const htmlOutput = document.getElementById("htmlOutput");
 const generateBtn = document.getElementById("generateBtn");
 const copyBtn = document.getElementById("copyBtn");
 const saveBtn = document.getElementById("saveBtn");
+const deleteBtn = document.getElementById("deleteBtn");
+const exportBtn = document.getElementById("exportBtn");
 const savedList = document.getElementById("savedList");
 
 const defaults = {
@@ -88,6 +90,10 @@ function normalizeValues(formData) {
     }
   }
   return values;
+}
+
+function currentId() {
+  return form.elements.signatureId?.value || "";
 }
 
 function buildSignature(values) {
@@ -188,6 +194,11 @@ async function updatePreview() {
 }
 
 async function saveToDb() {
+  const id = currentId();
+  if (id) {
+    await updateToDb(id);
+    return;
+  }
   const formData = new FormData(form);
   try {
     saveBtn.textContent = "Saving...";
@@ -202,12 +213,41 @@ async function saveToDb() {
     if (data.banner && form.elements.bannerUrl) {
       form.elements.bannerUrl.value = data.banner;
     }
+    if (data.id && form.elements.signatureId) {
+      form.elements.signatureId.value = data.id;
+    }
     await refreshSaved();
     updatePreviewWithUploads(data.photo, data.banner);
     saveBtn.textContent = "Saved!";
     setTimeout(() => (saveBtn.textContent = "Save to DB"), 1600);
   } catch (err) {
     saveBtn.textContent = "Save failed";
+    setTimeout(() => (saveBtn.textContent = "Save to DB"), 2000);
+  }
+}
+
+async function updateToDb(id) {
+  const formData = new FormData(form);
+  formData.append("id", id);
+  try {
+    saveBtn.textContent = "Updating...";
+    const res = await fetch("api.php?action=update", {
+      method: "POST",
+      body: formData,
+    });
+    const data = await res.json();
+    if (data.photo && form.elements.photoUrl) {
+      form.elements.photoUrl.value = data.photo;
+    }
+    if (data.banner && form.elements.bannerUrl) {
+      form.elements.bannerUrl.value = data.banner;
+    }
+    await refreshSaved();
+    updatePreviewWithUploads(data.photo, data.banner);
+    saveBtn.textContent = "Updated!";
+    setTimeout(() => (saveBtn.textContent = "Save to DB"), 1600);
+  } catch (err) {
+    saveBtn.textContent = "Update failed";
     setTimeout(() => (saveBtn.textContent = "Save to DB"), 2000);
   }
 }
@@ -226,6 +266,44 @@ function copyHtml() {
     copyBtn.textContent = "Copied!";
     setTimeout(() => (copyBtn.textContent = "Copy HTML"), 1600);
   });
+}
+
+async function deleteSignature() {
+  const id = currentId();
+  if (!id) return;
+  if (!confirm("Delete this signature?")) return;
+  try {
+    deleteBtn.textContent = "Deleting...";
+    await fetch("api.php?action=delete", {
+      method: "POST",
+      body: new URLSearchParams({ id }),
+    });
+    form.reset();
+    if (form.elements.signatureId) form.elements.signatureId.value = "";
+    if (form.elements.photoUrl) form.elements.photoUrl.value = "";
+    if (form.elements.bannerUrl) form.elements.bannerUrl.value = "";
+    setDefaults();
+    updatePreview();
+    await refreshSaved();
+  } finally {
+    deleteBtn.textContent = "Delete";
+  }
+}
+
+async function exportPng() {
+  if (!window.html2canvas) {
+    alert("PNG export needs internet access to load html2canvas.");
+    return;
+  }
+  const target = previewArea.querySelector(".signature");
+  if (!target) return;
+  exportBtn.textContent = "Exporting...";
+  const canvas = await window.html2canvas(target, { backgroundColor: "#ffffff", scale: 2 });
+  const link = document.createElement("a");
+  link.download = "signature.png";
+  link.href = canvas.toDataURL("image/png");
+  link.click();
+  exportBtn.textContent = "Export PNG";
 }
 
 async function refreshSaved() {
@@ -248,6 +326,15 @@ async function loadSignature(id) {
   const data = await res.json();
   const item = data.item;
   if (!item) return;
+  if (form.elements.signatureId) {
+    form.elements.signatureId.value = item.id || "";
+  }
+  if (form.elements.photoUrl) {
+    form.elements.photoUrl.value = item.photo_path || "";
+  }
+  if (form.elements.bannerUrl) {
+    form.elements.bannerUrl.value = item.banner_path || "";
+  }
   Object.entries(item).forEach(([key, value]) => {
     const map = {
       full_name: "fullName",
@@ -271,4 +358,6 @@ if (savedList) {
 
 if (generateBtn) generateBtn.addEventListener("click", updatePreview);
 if (saveBtn) saveBtn.addEventListener("click", saveToDb);
+if (deleteBtn) deleteBtn.addEventListener("click", deleteSignature);
 if (copyBtn) copyBtn.addEventListener("click", copyHtml);
+if (exportBtn) exportBtn.addEventListener("click", exportPng);

@@ -1,4 +1,7 @@
 <?php
+require_once __DIR__ . '/auth.php';
+require_auth();
+
 $root = __DIR__;
 $uploadsUrl = 'uploads';
 ?>
@@ -28,7 +31,10 @@ $uploadsUrl = 'uploads';
             signature when you're done.
           </p>
         </div>
-        <div class="badge">SQLite Powered</div>
+        <div class="badge">
+          SQLite Powered
+          <a class="logout" href="logout.php">Logout</a>
+        </div>
       </header>
 
       <section class="layout">
@@ -39,6 +45,7 @@ $uploadsUrl = 'uploads';
           </div>
 
           <form id="signatureForm" class="form" autocomplete="off">
+            <input type="hidden" name="signatureId" />
             <input type="hidden" name="photoUrl" />
             <input type="hidden" name="bannerUrl" />
             <div class="row">
@@ -155,7 +162,9 @@ $uploadsUrl = 'uploads';
             <div class="actions">
               <button type="button" id="generateBtn">Generate</button>
               <button type="button" id="saveBtn" class="ghost">Save to DB</button>
+              <button type="button" id="deleteBtn" class="ghost">Delete</button>
               <button type="button" id="copyBtn">Copy HTML</button>
+              <button type="button" id="exportBtn">Export PNG</button>
             </div>
           </form>
         </div>
@@ -187,6 +196,7 @@ $uploadsUrl = 'uploads';
         uploadsUrl: "<?php echo $uploadsUrl; ?>",
       };
     </script>
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <script src="app.js"></script>
   </body>
 </html>

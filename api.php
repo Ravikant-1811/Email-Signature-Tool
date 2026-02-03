@@ -1,5 +1,8 @@
 <?php
+require_once __DIR__ . '/auth.php';
 header('Content-Type: application/json');
+
+auth_json_guard();
 
 $method = $_SERVER['REQUEST_METHOD'];
 $action = $_GET['action'] ?? '';
@@ -58,6 +61,13 @@ function saveUpload($field, $uploadsDir) {
   return 'uploads/' . $name;
 }
 
+function pickPath($uploadedPath, $fallback) {
+  if ($uploadedPath) {
+    return $uploadedPath;
+  }
+  return $fallback ?? '';
+}
+
 if ($action === 'list') {
   $rows = $db->query('SELECT id, full_name, email, created_at FROM signatures ORDER BY id DESC')->fetchAll(PDO::FETCH_ASSOC);
   echo json_encode(['items' => $rows]);
@@ -83,6 +93,8 @@ if ($action === 'get') {
 if ($action === 'save' && $method === 'POST') {
   $photoPath = saveUpload('photo', $uploadsDir);
   $bannerPath = saveUpload('banner', $uploadsDir);
+  $photoFinal = pickPath($photoPath, $_POST['photoUrl'] ?? '');
+  $bannerFinal = pickPath($bannerPath, $_POST['bannerUrl'] ?? '');
 
   $payload = [
     'full_name' => $_POST['fullName'] ?? '',
@@ -102,8 +114,8 @@ if ($action === 'save' && $method === 'POST') {
     'youtube' => $_POST['youtube'] ?? '',
     'accent' => $_POST['accent'] ?? '',
     'theme' => $_POST['theme'] ?? '',
-    'photo_path' => $photoPath,
-    'banner_path' => $bannerPath,
+    'photo_path' => $photoFinal,
+    'banner_path' => $bannerFinal,
     'created_at' => date('c')
   ];
 
@@ -118,7 +130,83 @@ if ($action === 'save' && $method === 'POST') {
   )");
 
   $stmt->execute($payload);
-  echo json_encode(['success' => true, 'id' => $db->lastInsertId(), 'photo' => $photoPath, 'banner' => $bannerPath]);
+  echo json_encode(['success' => true, 'id' => $db->lastInsertId(), 'photo' => $photoFinal, 'banner' => $bannerFinal]);
+  exit;
+}
+
+if ($action === 'update' && $method === 'POST') {
+  $id = intval($_POST['id'] ?? 0);
+  if ($id <= 0) {
+    http_response_code(400);
+    echo json_encode(['error' => 'Missing id']);
+    exit;
+  }
+
+  $photoPath = saveUpload('photo', $uploadsDir);
+  $bannerPath = saveUpload('banner', $uploadsDir);
+  $photoFinal = pickPath($photoPath, $_POST['photoUrl'] ?? '');
+  $bannerFinal = pickPath($bannerPath, $_POST['bannerUrl'] ?? '');
+
+  $payload = [
+    'id' => $id,
+    'full_name' => $_POST['fullName'] ?? '',
+    'pronouns' => $_POST['pronouns'] ?? '',
+    'role_line' => $_POST['roleLine'] ?? '',
+    'dept_line' => $_POST['deptLine'] ?? '',
+    'mobile' => $_POST['mobile'] ?? '',
+    'telephone' => $_POST['telephone'] ?? '',
+    'email' => $_POST['email'] ?? '',
+    'website' => $_POST['website'] ?? '',
+    'publications' => $_POST['publications'] ?? '',
+    'linkedin' => $_POST['linkedin'] ?? '',
+    'x' => $_POST['x'] ?? '',
+    'facebook' => $_POST['facebook'] ?? '',
+    'instagram' => $_POST['instagram'] ?? '',
+    'github' => $_POST['github'] ?? '',
+    'youtube' => $_POST['youtube'] ?? '',
+    'accent' => $_POST['accent'] ?? '',
+    'theme' => $_POST['theme'] ?? '',
+    'photo_path' => $photoFinal,
+    'banner_path' => $bannerFinal
+  ];
+
+  $stmt = $db->prepare(\"UPDATE signatures SET
+    full_name = :full_name,
+    pronouns = :pronouns,
+    role_line = :role_line,
+    dept_line = :dept_line,
+    mobile = :mobile,
+    telephone = :telephone,
+    email = :email,
+    website = :website,
+    publications = :publications,
+    linkedin = :linkedin,
+    x = :x,
+    facebook = :facebook,
+    instagram = :instagram,
+    github = :github,
+    youtube = :youtube,
+    accent = :accent,
+    theme = :theme,
+    photo_path = :photo_path,
+    banner_path = :banner_path
+    WHERE id = :id
+  \");
+  $stmt->execute($payload);
+  echo json_encode(['success' => true, 'id' => $id, 'photo' => $photoFinal, 'banner' => $bannerFinal]);
+  exit;
+}
+
+if ($action === 'delete' && $method === 'POST') {
+  $id = intval($_POST['id'] ?? 0);
+  if ($id <= 0) {
+    http_response_code(400);
+    echo json_encode(['error' => 'Missing id']);
+    exit;
+  }
+  $stmt = $db->prepare('DELETE FROM signatures WHERE id = :id');
+  $stmt->execute([':id' => $id]);
+  echo json_encode(['success' => true]);
   exit;
 }
 

@@ -131,6 +131,18 @@ h1 {
   font-size: 0.7rem;
   color: var(--muted);
   background: rgba(15, 17, 22, 0.7);
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.logout {
+  color: var(--text);
+  text-decoration: none;
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  border-left: 1px solid rgba(255, 255, 255, 0.2);
+  padding-left: 12px;
 }
 
 .layout {
@@ -250,6 +262,17 @@ button.ghost {
   color: var(--text);
   border: 1px solid rgba(255, 255, 255, 0.25);
   box-shadow: none;
+}
+
+.auth-panel {
+  max-width: 420px;
+  margin: 120px auto;
+  text-align: left;
+}
+
+.auth-error {
+  color: #ff9aa2;
+  margin: 10px 0 6px;
 }
 
 .preview {

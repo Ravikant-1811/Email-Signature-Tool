@@ -22,10 +22,18 @@ php -S localhost:8002 -t .
 Then open:
 `http://localhost:8002/index.php`
 
+## Admin Login
+- Default password is set in `config.php`
+- Change `change-me` to your preferred password before deploying
+
 ## Project Structure
 - `index.php` — UI
 - `app.js` — front-end logic
 - `api.php` — SQLite API + upload handler
+- `login.php` — admin login
+- `logout.php` — end session
+- `auth.php` — auth helpers
+- `config.php` — admin password
 - `styles.css` — UI styles
 - `uploads/` — uploaded images (ignored in git)
 - `storage/` — SQLite database (ignored in git)
@@ -33,3 +41,4 @@ Then open:
 ## Notes
 - Uploaded images are stored in `uploads/`.
 - SQLite DB is created automatically in `storage/`.
+- PNG export uses `html2canvas` from a CDN and needs internet access.
