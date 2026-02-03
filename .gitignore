@@ -1,0 +1,4 @@
+/uploads/*
+/storage/*.sqlite
+/storage/*.db
+.DS_Store
